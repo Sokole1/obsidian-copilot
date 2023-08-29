@@ -39,6 +39,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import { PDFPageSelectorModal, PDFViewer } from './PDFPageSelector';
 
 interface CreateEffectOptions {
   custom_temperature?: number;
@@ -129,18 +130,7 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
-  const forceRebuildActiveNoteContext = async () => {
-    if (!app) {
-      console.error('App instance is not available.');
-      return;
-    }
-
-    const file = app.workspace.getActiveFile();
-    if (!file) {
-      new Notice('No active note found.');
-      console.error('No active note found.');
-      return;
-    }
+  async function buildIndexForFile(file: TFile) {
     const noteContent = await getFileContent(file);
     if (debug) {
       console.log("ALL NOTE CONTENT IS", noteContent)
@@ -165,6 +155,28 @@ const Chat: React.FC<ChatProps> = ({
     }
 
     addMessage(activeNoteOnMessage);
+  }
+
+  const forceRebuildActiveNoteContext = async () => {
+    if (!app) {
+      console.error('App instance is not available.');
+      return;
+    }
+
+    const file = app.workspace.getActiveFile();
+    if (!file) {
+      new Notice('No active note found.');
+      console.error('No active note found.');
+      return;
+    }
+    if (file.extension !== 'md') {
+      new PDFPageSelectorModal(app, file, (range) => {
+        console.log(range);
+      }).open();
+    }
+    else {
+      await buildIndexForFile(file);
+    }
   };
 
   const clearCurrentAiMessage = () => {
@@ -223,6 +235,8 @@ const Chat: React.FC<ChatProps> = ({
           ...aiState.langChainParams,
           ...(custom_temperature && { temperature: custom_temperature }),
         };
+
+        console.log("TRY GETTING AI RESPONSE WITH MESSAGE OF LENGTH", promptMessage.message.length);
 
         await getAIResponse(
           promptMessage,
