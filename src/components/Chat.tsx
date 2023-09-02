@@ -236,8 +236,6 @@ const Chat: React.FC<ChatProps> = ({
           ...(custom_temperature && { temperature: custom_temperature }),
         };
 
-        console.log("TRY GETTING AI RESPONSE WITH MESSAGE OF LENGTH", promptMessage.message.length);
-
         await getAIResponse(
           promptMessage,
           [],

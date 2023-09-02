@@ -396,7 +396,7 @@ export default class CopilotPlugin extends Plugin {
     }
 
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (activeView) {
+    if (!selectedText && activeView) {
       const editor = activeView.editor;
       selectedText = editor.getSelection();
     }
