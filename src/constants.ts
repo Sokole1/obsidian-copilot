@@ -118,3 +118,5 @@ export const DEFAULT_SETTINGS: CopilotSettings = {
   debug: false,
 };
 export const OPEN_AI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+export const PAGES_FOR_LARGE_PDF = 10;

@@ -1,10 +1,28 @@
-import { App, TFile, loadPdfJs } from "obsidian";
+import { App, TFile, loadPdfJs, Notice } from "obsidian";
+import { PDFPageModal } from "./components/PDFPageModal"
+import { PAGES_FOR_LARGE_PDF } from "./constants";
 
 async function loadPDF(app: App, file: TFile) {
   const PDFJS = await loadPdfJs();
   const pdfBinary = await app.vault.readBinary(file);
   const doc = await PDFJS.getDocument(pdfBinary).promise;
   return doc;
+}
+
+async function getPDFTextFromPages(doc: any, startIndex: number, endIndex: number): Promise<String[]> {
+  let textContent = [];
+  for (let i = startIndex; i < endIndex; i++) {
+    let page = await doc.getPage(i + 1);
+    let text = await page.getTextContent();
+
+    if (text.items.length > 0) {
+      let pageText = text.items.map((item: any) => item.str).join(" ");
+      pageText = pageText.replace(/\s+/g, ' ').trim(); // Remove potentially duplicated spaces
+      textContent.push(pageText);
+    }
+  }
+
+  return textContent;
 }
 
 /**
@@ -16,23 +34,25 @@ async function loadPDF(app: App, file: TFile) {
 export async function getAllPDFText(app: App, file: TFile): Promise<string | null> {
   const doc = await loadPDF(app, file);
 
-  let textContent = [];
-  for (let i = 0; i < doc.numPages; i++) {
-    let page = await doc.getPage(i + 1);
-    let text = await page.getTextContent();
-
-    if (text.items.length > 0) {
-      let pageText = text.items.map((item: any) => item.str).join(" ");
-      pageText = pageText.replace(/\s+/g, ' ').trim(); // Remove potentially duplicated spaces
-      textContent.push(pageText);
-    }
+  if (doc.numPages > PAGES_FOR_LARGE_PDF) {
+    return new Promise((resolve, reject) => {
+      new PDFPageModal(app, file, async (startPage, endPage) => {
+        new Notice(
+          "SUBMITTED WITH START PAGE: " +
+            startPage +
+            " AND END PAGE: " +
+            endPage
+        );
+        let textContent = await getPDFTextFromPages(doc, startPage - 1, endPage);
+        resolve(textContent.length == 0 ? null : textContent.join(""));
+      }).open();
+    });
+  } else {
+    let textContent = await getPDFTextFromPages(doc, 0, doc.numPages);
+    return textContent.length == 0 ? null : textContent.join("");
   }
-
-  if (textContent.length == 0) {
-    return null;
-  }
-  return textContent.join("");
 }
+
 
 export const FileUtils = {
 	getAllPDFText,

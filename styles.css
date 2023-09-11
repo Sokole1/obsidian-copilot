@@ -254,3 +254,48 @@ If your plugin does not need CSS, delete this file.
 .custom-prompt-save-btn {
   margin-top: 15px;
 }
+
+/* Styles for PDFPageModal */
+.pdf-main-container {
+  display: flex;
+}
+
+.pdf-control-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  border-right: 1px solid #ccc;
+}
+
+.pdf-control-section {
+  margin-bottom: 24px;
+}
+
+.pdf-flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.pdf-range-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pdf-control-section-hr {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.pdf-canvas-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pdf-input[type="number"] {
+  max-width: 6ch;
+}
+
