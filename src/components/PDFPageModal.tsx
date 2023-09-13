@@ -8,7 +8,8 @@ interface PDFViewerProps {
 	onSubmit: (startPage: number, endPage: number) => void;
 }
 
-function PDFViewer({ pdfBinary, setPageRange, onSubmit }: PDFViewerProps) {
+
+const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit }) => {
 	let maxPages = 1;
 
 	const [pdfDocument, setPdfDocument] = React.useState<null | any>(null);
@@ -69,12 +70,17 @@ function PDFViewer({ pdfBinary, setPageRange, onSubmit }: PDFViewerProps) {
 		let newStartPage = startPage;
 		let newEndPage = endPage;
 
-		if (startPage < 1) newStartPage = 1;
-		if (endPage > pageCount) newEndPage = pageCount;
-		if (startPage > endPage) {
-			newStartPage = endPage;
-			newEndPage = startPage;
+		if (Number.isNaN(newStartPage)) {
+			newStartPage = 1;			
 		}
+
+		if (Number.isNaN(newEndPage)) {
+			newEndPage = pageCount;
+		}
+
+		if (newStartPage < 1) newStartPage = 1;
+		if (newStartPage > newEndPage) newEndPage = newStartPage;
+		if (newEndPage > pageCount) newEndPage = pageCount;
 
 		// Ensure currentPage is not out of range
 		let newCurrentPage = currentPage;
@@ -145,7 +151,12 @@ function PDFViewer({ pdfBinary, setPageRange, onSubmit }: PDFViewerProps) {
 				<div className="pdf-control-section">
 					<div className="pdf-flex-center pdf-range-label">
 						View Page:
-						<button onClick={handlePrevPage}>-</button>
+						<button 
+						onClick={handlePrevPage}
+						disabled={currentPage <= startPage || currentPage <= 1} // Disabled condition for "-"
+					>
+						-
+					</button>
 						<label className="pdf-input-label">
 							<input
 								className="pdf-input"
@@ -155,7 +166,12 @@ function PDFViewer({ pdfBinary, setPageRange, onSubmit }: PDFViewerProps) {
 								onBlur={handlePageBlur}
 							/>
 						</label>
-						<button onClick={handleNextPage}>+</button>
+						<button 
+						onClick={handleNextPage}
+						disabled={currentPage >= endPage || currentPage >= pageCount} // Disabled condition for "+"
+					>
+						+
+					</button>
 					</div>
 					<span>Total PDF Pages: {pageCount}</span>
 				</div>
