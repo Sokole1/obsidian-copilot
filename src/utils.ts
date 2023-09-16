@@ -93,7 +93,7 @@ export const formatDateTime = (now: Date, timezone: 'local' | 'utc' = 'local') =
 };
 
 export async function getFileContent(file: TFile): Promise<string | null> {
-  if (file.extension == "md") {
+  if (file.extension == "md" || file.extension == "txt") {
     return await this.app.vault.read(file);
   } else if (file.extension == "pdf") {
     return await FileUtils.getAllPDFText(this.app, file);
