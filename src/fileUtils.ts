@@ -37,10 +37,14 @@ export async function getAllPDFText(app: App, file: TFile): Promise<string | nul
   if (doc.numPages > PAGES_FOR_LARGE_PDF) {
     return new Promise((resolve, reject) => {
       new PDFPageModal(app, file, async (startPage, endPage) => {
+        if (startPage == 0 && endPage == 0) { // This happens if they exit the modal without submitting
+          resolve(null);
+          return;
+        }
         new Notice(
-          "SUBMITTED WITH START PAGE: " +
+          "Reading PDF Pages: " +
             startPage +
-            " AND END PAGE: " +
+            " - " +
             endPage
         );
         let textContent = await getPDFTextFromPages(doc, startPage - 1, endPage);

@@ -13,6 +13,7 @@ export class PDFPageModal extends Modal {
 	};
 	file: TFile;
 	onSubmit: (startPage: number, endPage: number) => void;
+	hitSubmit: boolean = false;
 
 	constructor(
 		app: App,
@@ -29,6 +30,7 @@ export class PDFPageModal extends Modal {
 	}
 
 	onSubmitModal() {
+		this.hitSubmit = true;
 		this.onSubmit(this.pageRange.startPage, this.pageRange.endPage);
 		this.close();
 	}
@@ -48,6 +50,9 @@ export class PDFPageModal extends Modal {
 	async onClose(): Promise<void> {
 		if (this.root) {
 			this.root.unmount();
+		}
+		if (!this.hitSubmit) {
+			this.onSubmit(0, 0)
 		}
 	}
 }

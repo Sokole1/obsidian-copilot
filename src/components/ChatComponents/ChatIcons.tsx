@@ -73,6 +73,7 @@ const ChatIcons: React.FC<ChatIconsProps> = ({
       const file = app.workspace.getActiveFile();
       if (!file) {
         new Notice('No active note found.');
+        setSelectedChain(ChainType.LLM_CHAIN);
         console.error('No active note found.');
         return;
       }
