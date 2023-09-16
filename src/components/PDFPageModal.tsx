@@ -2,12 +2,62 @@ import { App, Modal, TFile, loadPdfJs } from "obsidian";
 import { Root, createRoot } from "react-dom/client";
 import * as React from "react";
 
+/**
+ * Modal that allows the user to define a page range in their PDF
+ */
+export class PDFPageModal extends Modal {
+	private root: Root | null = null;
+	pageRange: { startPage: number; endPage: number } = {
+		startPage: 0,
+		endPage: 0,
+	};
+	file: TFile;
+	onSubmit: (startPage: number, endPage: number) => void;
+
+	constructor(
+		app: App,
+		file: TFile,
+		onSubmit: (startPage: number, endPage: number) => void
+	) {
+		super(app);
+		this.file = file;
+		this.onSubmit = onSubmit;
+	}
+
+	setPageRange(startPage: number, endPage: number) {
+		this.pageRange = { startPage, endPage };
+	}
+
+	onSubmitModal() {
+		this.onSubmit(this.pageRange.startPage, this.pageRange.endPage);
+		this.close();
+	}
+
+	async onOpen(): Promise<void> {
+		const pdfBinary = await this.app.vault.readBinary(this.file);
+		this.root = createRoot(this.contentEl);
+		this.root.render(
+			<PDFViewer
+				pdfBinary={pdfBinary}
+				setPageRange={this.setPageRange.bind(this)}
+				onSubmit={this.onSubmitModal.bind(this)}
+			/>
+		);
+	}
+
+	async onClose(): Promise<void> {
+		if (this.root) {
+			this.root.unmount();
+		}
+	}
+}
+
+
 interface PDFViewerProps {
 	pdfBinary: ArrayBuffer;
 	setPageRange: (startPage: number, endPage: number) => void;
 	onSubmit: (startPage: number, endPage: number) => void;
 }
-
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit }) => {
 	let maxPages = 1;
@@ -37,6 +87,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit
 		}
 		loadPdf();
 	}, [pdfBinary]);
+
+
 
 	const handlePageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const value = parseInt(event.target.value, 10);
@@ -78,9 +130,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit
 			newEndPage = pageCount;
 		}
 
-		if (newStartPage < 1) newStartPage = 1;
-		if (newStartPage > newEndPage) newEndPage = newStartPage;
-		if (newEndPage > pageCount) newEndPage = pageCount;
+		[newStartPage, newEndPage] = clampPageRange(newStartPage, newEndPage, pageCount);
 
 		// Ensure currentPage is not out of range
 		let newCurrentPage = currentPage;
@@ -154,7 +204,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit
 						<button 
 						onClick={handlePrevPage}
 						disabled={currentPage <= startPage || currentPage <= 1} // Disabled condition for "-"
-					>
+						>
 						-
 					</button>
 						<label className="pdf-input-label">
@@ -169,7 +219,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit
 						<button 
 						onClick={handleNextPage}
 						disabled={currentPage >= endPage || currentPage >= pageCount} // Disabled condition for "+"
-					>
+						>
 						+
 					</button>
 					</div>
@@ -218,51 +268,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBinary, setPageRange, onSubmit
 }
 
 /**
- * Modal that allows the user to define a page range in their PDF
+ * Make sure that 1 <= newStartPage <= newEndPage <= pageCount 
+ * @param newStartPage 
+ * @param newEndPage 
+ * @param pageCount 
+ * @returns 
  */
-export class PDFPageModal extends Modal {
-	private root: Root | null = null;
-	pageRange: { startPage: number; endPage: number } = {
-		startPage: 0,
-		endPage: 0,
-	};
-	file: TFile;
-	onSubmit: (startPage: number, endPage: number) => void;
-
-	constructor(
-		app: App,
-		file: TFile,
-		onSubmit: (startPage: number, endPage: number) => void
-	) {
-		super(app);
-		this.file = file;
-		this.onSubmit = onSubmit;
+function clampPageRange(newStartPage: number, newEndPage: number, pageCount: number): [number, number] {
+	if (newStartPage < 1) {
+		newStartPage = 1;
 	}
 
-	setPageRange(startPage: number, endPage: number) {
-		this.pageRange = { startPage, endPage };
+	if (newEndPage > pageCount) {
+		newEndPage = pageCount;
 	}
 
-	onSubmitModal() {
-		this.onSubmit(this.pageRange.startPage, this.pageRange.endPage);
-		this.close();
+	if (newStartPage > newEndPage) {
+		newStartPage = newEndPage;
 	}
 
-	async onOpen(): Promise<void> {
-		const pdfBinary = await this.app.vault.readBinary(this.file);
-		this.root = createRoot(this.contentEl);
-		this.root.render(
-			<PDFViewer
-				pdfBinary={pdfBinary}
-				setPageRange={this.setPageRange.bind(this)}
-				onSubmit={this.onSubmitModal.bind(this)}
-			/>
-		);
-	}
-
-	async onClose(): Promise<void> {
-		if (this.root) {
-			this.root.unmount();
-		}
-	}
+	return [newStartPage, newEndPage];
 }

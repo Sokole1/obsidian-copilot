@@ -299,3 +299,7 @@ If your plugin does not need CSS, delete this file.
   max-width: 6ch;
 }
 
+button[disabled] {
+  cursor: not-allowed;
+}
+
